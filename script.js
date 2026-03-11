@@ -26,18 +26,18 @@ const ZONE_CONFIG = {
         codes: [0, 1, 2, 3, 4],
         minTemp: 15,
         maxTemp: 30,
-        // Pink/rose scale (matches your CSS .tropical-gradient)
+        // Yellow → orange → red → dark red (matches image tropical scale)
         colorScale: d3.scaleSequential(d3.interpolateRgbBasis([
-            '#fde2e4', '#fbb6ce', '#f687b3', '#ed64a6', '#d53f8c', '#b83280'
+            '#ffffcc', '#fee08b', '#fdae61', '#f46d43', '#d73027', '#a50026'
         ]))
     },
     temperate: {
         codes: [6, 11, 12],
         minTemp: 16,
         maxTemp: 28,
-        // Teal/green scale (matches your CSS .temperate-gradient)
+        // Light green → medium green → dark green (matches image temperate scale)
         colorScale: d3.scaleSequential(d3.interpolateRgbBasis([
-            '#d3f9d8', '#b2f5ea', '#81e6d9', '#4fd1c5', '#38b2ac', '#2c7a7b'
+            '#d4edda', '#74c476', '#31a354', '#006d2c', '#00441b', '#002d0f'
         ]))
     },
     cold: {
@@ -48,9 +48,9 @@ const ZONE_CONFIG = {
         })(),
         minTemp: 8,
         maxTemp: 25,
-        // Indigo/blue scale (matches your CSS .cold-gradient)
+        // Very light blue → sky blue → deep navy blue (matches image cold scale)
         colorScale: d3.scaleSequential(d3.interpolateRgbBasis([
-            '#e0e7ff', '#c3dafe', '#a3bffa', '#7f9cf5', '#667eea', '#5a67d8'
+            '#f7fbff', '#c6dbef', '#6baed6', '#2171b5', '#08519c', '#08306b'
         ]))
     }
 };
@@ -224,9 +224,9 @@ function redrawClusters() {
             .attr('class', 'cluster-dot')
             .attr('cx', px)
             .attr('cy', py)
-            .attr('r', 2.5)
+            .attr('r', 1.7)
             .attr('fill', '#cbd5e0')
-            .attr('fill-opacity', 0.7);
+            .attr('fill-opacity', 1.5);
 
         // Store the underlying DOM node for fast fill updates later
         state.clusterLayers[clusterId] = circle.node();

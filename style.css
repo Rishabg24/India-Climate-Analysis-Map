@@ -246,20 +246,22 @@ body {
 
 .india-boundary {
     fill: #f6f8fa;
-    stroke: #2d3748;
-    stroke-width: 1.5px;
+    stroke: #000000;
+    stroke-width: 2.5px;
     stroke-linejoin: round;
 }
 
 .cluster-dot {
     cursor: pointer;
     transition: opacity 0.2s ease;
+
+
 }
 
 .cluster-dot:hover {
-    opacity: 0.8;
+    opacity: 1.2;
     stroke: #1a202c;
-    stroke-width: 1px;
+    stroke-width: 1.5px;
 }
 
 /* Loading Overlay */
@@ -361,56 +363,34 @@ body {
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* NEW COOLER COLORS - More muted, professional */
 .tropical-gradient {
     background: linear-gradient(to right,
-            #fde2e4 0%,
-            /* Very light pink */
-            #fbb6ce 20%,
-            /* Soft pink */
-            #f687b3 40%,
-            /* Medium pink */
-            #ed64a6 60%,
-            /* Rose */
-            #d53f8c 80%,
-            /* Deep rose */
-            #b83280 100%
-            /* Darker rose */
-        );
+            #ffffcc 0%,
+            #fee08b 20%,
+            #fdae61 40%,
+            #f46d43 60%,
+            #d73027 80%,
+            #a50026 100%);
 }
 
 .temperate-gradient {
     background: linear-gradient(to right,
-            #d3f9d8 0%,
-            /* Very light green */
-            #b2f5ea 20%,
-            /* Mint */
-            #81e6d9 40%,
-            /* Teal-green */
-            #4fd1c5 60%,
-            /* Turquoise */
-            #38b2ac 80%,
-            /* Medium teal */
-            #2c7a7b 100%
-            /* Dark teal */
-        );
+            #d4edda 0%,
+            #74c476 20%,
+            #31a354 40%,
+            #006d2c 60%,
+            #00441b 80%,
+            #002d0f 100%);
 }
 
 .cold-gradient {
     background: linear-gradient(to right,
-            #e0e7ff 0%,
-            /* Very light indigo */
-            #c3dafe 20%,
-            /* Light blue */
-            #a3bffa 40%,
-            /* Sky blue */
-            #7f9cf5 60%,
-            /* Medium blue */
-            #667eea 80%,
-            /* Indigo */
-            #5a67d8 100%
-            /* Deep indigo */
-        );
+            #f7fbff 0%,
+            #c6dbef 20%,
+            #6baed6 40%,
+            #2171b5 60%,
+            #08519c 80%,
+            #08306b 100%);
 }
 
 .legend-labels {
