@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>India Temperature Explorer</title>
+    <title>India Climate Analysis</title>
 
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -17,17 +17,47 @@
 
     <div id="app">
 
+        <!-- ═══════════════════════════════════════
+             TOP NAV — mode switcher lives here
+        ════════════════════════════════════════ -->
+        <nav id="top-nav">
+            <div class="nav-brand">
+                <span class="nav-title">India Climate Analysis</span>
+            </div>
+
+            <div class="mode-toggle-wrapper">
+                <div class="mode-toggle" role="tablist" aria-label="Data mode">
+                    <button class="mode-btn active" data-mode="temp" id="btn-temp"
+                        role="tab" aria-selected="true">
+                        <span class="mode-label">Temperature</span>
+                    </button>
+                    <button class="mode-btn" data-mode="pm25" id="btn-pm25"
+                        role="tab" aria-selected="false">
+                        <span class="mode-label">PM2.5</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-end">
+                <span class="nav-dataset-tag temp-only">Daily Temperature · 2013–2021</span>
+                <span class="nav-dataset-tag pm25-only">Air Quality · 2013–2021</span>
+            </div>
+        </nav>
+
         <div id="main-content">
 
-            <!-- Left Panel: Controls -->
+            <!-- ═══════════════════════════════════════
+                 LEFT PANEL — controls (morphs per mode)
+            ════════════════════════════════════════ -->
             <aside id="controls">
                 <div class="controls-header">
                     <h2>Climate Data Explorer</h2>
-                    <p class="subtitle">India Temperature Analysis 2013-2021</p>
+                    <p class="subtitle temp-only">India Temperature Analysis 2013–2021</p>
+                    <p class="subtitle pm25-only">India PM2.5 Analysis 2013–2021</p>
                 </div>
 
-                <!-- Temperature Type Toggle -->
-                <div class="control-section">
+                <!-- ─── TEMPERATURE CONTROLS ─── -->
+                <div class="control-section temp-only">
                     <h3>Temperature Type</h3>
                     <div class="radio-group">
                         <label class="radio-label">
@@ -41,8 +71,7 @@
                     </div>
                 </div>
 
-                <!-- Year Selection -->
-                <div class="control-section">
+                <div class="control-section temp-only">
                     <h3>Select Years</h3>
                     <div class="checkbox-grid">
                         <label class="checkbox-label">
@@ -81,25 +110,78 @@
                         <label class="checkbox-label">
                             <input type="checkbox" class="year-checkbox" value="2021">
                             <span class="checkbox-text">2021</span>
-                            <span class="year-note">Jan-Apr</span>
+                            <span class="year-note">Jan–Apr</span>
                         </label>
                     </div>
                 </div>
 
-                <!-- Instructions -->
-                <div class="control-section">
+                <div class="control-section temp-only">
                     <div class="instructions">
-                        <p>Select one or more years to load temperature data. Use the slider below and your left and
-                            right arrow keys
-                            to explore different dates. Or play through them using the play button.</p>
+                        <p>Select one or more years to load temperature data. Use the slider below and your
+                            left and right arrow keys to explore different dates, or press Play to animate.</p>
                     </div>
                 </div>
+
+                <!-- ─── PM2.5 CONTROLS ─── -->
+                <div class="control-section pm25-only">
+                    <h3>Select Years</h3>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2013">
+                            <span class="checkbox-text">2013</span>
+                            <span class="year-note">Dec</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2014">
+                            <span class="checkbox-text">2014</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2015">
+                            <span class="checkbox-text">2015</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2016">
+                            <span class="checkbox-text">2016</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2017">
+                            <span class="checkbox-text">2017</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2018">
+                            <span class="checkbox-text">2018</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2019">
+                            <span class="checkbox-text">2019</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2020">
+                            <span class="checkbox-text">2020</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="pm25-year-checkbox" value="2021">
+                            <span class="checkbox-text">2021</span>
+                            <span class="year-note">Jan–Apr</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-section pm25-only">
+                    <div class="instructions">
+                        <p>Select one or more years to load PM2.5 data. Use the slider below and your
+                            left and right arrow keys to explore daily air quality patterns, or press Play to animate.</p>
+                    </div>
+                </div>
+
             </aside>
 
-            <!-- Center: Map -->
+            <!-- ═══════════════════════════════════════
+                 CENTER — map (unchanged structurally)
+            ════════════════════════════════════════ -->
             <main id="map-container">
                 <div id="map-header">
-                    <h1 id="current-temp-type">Maximum Temperature</h1>
+                    <h1 id="current-map-title">Maximum Temperature</h1>
                     <p id="map-subtitle">Select years and use the slider to explore daily temperature patterns</p>
                 </div>
                 <div id="map">
@@ -111,16 +193,18 @@
                 </div>
             </main>
 
-            <!-- Right Panel: Legends -->
+            <!-- ═══════════════════════════════════════
+                 RIGHT PANEL — legends (morphs per mode)
+            ════════════════════════════════════════ -->
             <aside id="legends">
-                <div class="legends-header">
+
+                <!-- ─── TEMPERATURE LEGENDS ─── -->
+                <div class="legends-header temp-only">
                     <h3>Temperature Zones</h3>
                 </div>
 
-                <!-- Tropical Zone Legend -->
-                <div class="legend-box">
+                <div class="legend-box temp-only">
                     <h4>Tropical Zone</h4>
-                    <!-- <p class="zone-description">kg_code: 0-4</p> -->
                     <div class="legend-gradient tropical-gradient"></div>
                     <div class="legend-labels">
                         <span>15°C</span>
@@ -128,10 +212,8 @@
                     </div>
                 </div>
 
-                <!-- Temperate Zone Legend -->
-                <div class="legend-box">
+                <div class="legend-box temp-only">
                     <h4>Temperate Zone</h4>
-                    <!-- <p class="zone-description">kg_code: 6, 11, 12</p> -->
                     <div class="legend-gradient temperate-gradient"></div>
                     <div class="legend-labels">
                         <span>16°C</span>
@@ -139,10 +221,8 @@
                     </div>
                 </div>
 
-                <!-- Cold Zone Legend -->
-                <div class="legend-box">
+                <div class="legend-box temp-only">
                     <h4>Cold Zone</h4>
-                    <!-- <p class="zone-description">kg_code: 5, 7-10, 13-29</p> -->
                     <div class="legend-gradient cold-gradient"></div>
                     <div class="legend-labels">
                         <span>8°C</span>
@@ -150,7 +230,34 @@
                     </div>
                 </div>
 
-                <!-- Missing Data -->
+                <!-- ─── PM2.5 LEGENDS ─── -->
+                <div class="legends-header pm25-only">
+                    <h3>PM2.5 Concentration</h3>
+                    <p class="legends-subhead">µg/m³ (micrograms per cubic meter)</p>
+                </div>
+
+                <div class="legend-box pm25-only">
+                    <h4>PM2.5 Concentration Scale</h4>
+                    <div class="legend-gradient pm25-gradient"></div>
+                    <div class="legend-labels pm25-scale-labels">
+                        <span>0</span>
+                        <span>35</span>
+                        <span>75</span>
+                        <span>110</span>
+                        <span>150+</span>
+                    </div>
+                </div>
+
+
+                <div class="legend-box pm25-only">
+                    <div class="who-note">
+                        <p class="who-label">WHO 2021 Guideline</p>
+                        <p class="who-value">Annual mean: <strong>5 µg/m³</strong></p>
+                        <p class="who-value">24-hr mean: <strong>15 µg/m³</strong></p>
+                    </div>
+                </div>
+
+                <!-- ─── ALWAYS VISIBLE ─── -->
                 <div class="legend-box">
                     <h4>No Data</h4>
                     <div class="legend-item-row">
@@ -159,15 +266,23 @@
                     </div>
                 </div>
 
-                <!-- Playback -->
                 <div class="legend-box">
                     <button id="play-btn" disabled>▶ Play</button>
                 </div>
+
+                <div class="Data-loading-note">
+                    <div class="loading-note">
+                        <p>Note: Please allow up to 5 minutes for all the data to load.</p>
+                    </div>
+                </div>
+
             </aside>
 
         </div>
 
-        <!-- Bottom: Date Slider -->
+        <!-- ═══════════════════════════════════════
+             BOTTOM — date slider (unchanged)
+        ════════════════════════════════════════ -->
         <div id="slider-section">
             <div id="date-display">
                 <span id="current-date">Select years to begin</span>

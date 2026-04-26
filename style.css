@@ -22,6 +22,18 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* ═══════════════════════════════════════════════════════
+   MODE VISIBILITY RULES
+   body defaults to temp mode (no class needed)
+   body.mode-pm25 triggers the PM2.5 view
+════════════════════════════════════════════════════════ */
+.pm25-only                    { display: none; }
+body.mode-pm25 .pm25-only     { display: block; }
+body.mode-pm25 .temp-only     { display: none; }
+
+/* Fix: flex/grid children that use pm25-only need display:flex/grid not block */
+body.mode-pm25 .legends-header.pm25-only { display: block; }
+
 /* ===== LAYOUT ===== */
 #app {
     display: flex;
@@ -37,6 +49,106 @@ body {
     min-height: 0;
 }
 
+/* ═══════════════════════════════════════════════════════
+   TOP NAV
+════════════════════════════════════════════════════════ */
+#top-nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: 52px;
+    padding: 0 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #e1e4e8;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
+    flex-shrink: 0;
+    z-index: 20;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-flag {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.nav-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #24292e;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+}
+
+/* ─── Mode Toggle Pill ─── */
+.mode-toggle-wrapper {
+    display: flex;
+    justify-content: center;
+}
+
+.mode-toggle {
+    display: flex;
+    background: #f0f1f3;
+    border-radius: 10px;
+    padding: 4px;
+    gap: 3px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 18px;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #6a737d;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    font-family: inherit;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.mode-btn:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.6);
+    color: #24292e;
+}
+
+.mode-btn.active {
+    background: #ffffff;
+    color: #24292e;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0,0,0,0.04);
+}
+
+/* Accent the active button per mode */
+body:not(.mode-pm25) #btn-temp.active { color: #667eea; }
+body.mode-pm25       #btn-pm25.active { color: #c0392b; }
+
+.mode-icon { font-size: 15px; }
+.mode-label { letter-spacing: -0.1px; }
+
+/* ─── Nav right end: dataset tag ─── */
+.nav-end {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.nav-dataset-tag {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #959da5;
+    letter-spacing: 0.1px;
+    white-space: nowrap;
+}
+
 /* ===== LEFT PANEL: CONTROLS ===== */
 #controls {
     width: 300px;
@@ -48,11 +160,17 @@ body {
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
+/* ─── Controls header: changes gradient in PM2.5 mode ─── */
 .controls-header {
     padding: 28px 24px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #486b7e 0%, #c12323 100%);
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.3s ease;
+}
+
+body.mode-pm25 .controls-header {
+    background: linear-gradient(135deg,  #486b7e 0%, #c12323 100%);
 }
 
 .controls-header h2 {
@@ -164,6 +282,10 @@ body {
     color: #667eea;
 }
 
+body.mode-pm25 .checkbox-label input[type="checkbox"]:checked~.checkbox-text {
+    color: #c0392b;
+}
+
 .checkbox-label input[type="checkbox"]:checked+.checkbox-text::before {
     content: '✓';
     position: absolute;
@@ -171,6 +293,10 @@ body {
     right: 6px;
     font-size: 12px;
     color: #667eea;
+}
+
+body.mode-pm25 .checkbox-label input[type="checkbox"]:checked+.checkbox-text::before {
+    color: #c0392b;
 }
 
 .checkbox-text {
@@ -191,13 +317,40 @@ body {
     padding: 14px;
     background: #f1f3f5;
     border-radius: 6px;
-    border-left: 3px solid #667eea;
+    border-left: 3px solid #2f3658;
+}
+
+body.mode-pm25 .instructions {
+    border-left-color: #2f3658;
 }
 
 .instructions p {
     font-size: 13px;
     line-height: 1.6;
     color: #586069;
+}
+
+/* PM2.5 source note */
+.pm25-source-note {
+    padding: 12px 14px;
+    background: #fff8f5;
+    border-radius: 6px;
+    border: 1px solid #fad7c8;
+}
+
+.source-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: #c0392b;
+    margin-bottom: 4px;
+}
+
+.source-value {
+    font-size: 13px;
+    color: #444;
+    line-height: 1.5;
 }
 
 /* ===== CENTER: MAP ===== */
@@ -240,28 +393,34 @@ body {
 
 /* D3 Map Styles */
 #map svg {
+    display: block;
     width: 100%;
     height: 100%;
 }
 
 .india-boundary {
-    fill: #f6f8fa;
+    fill: none;
     stroke: #000000;
-    stroke-width: 2.5px;
-    stroke-linejoin: round;
-}
-
-.cluster-dot {
-    cursor: pointer;
-    transition: opacity 0.2s ease;
-
-
-}
-
-.cluster-dot:hover {
-    opacity: 1.2;
-    stroke: #1a202c;
     stroke-width: 1.5px;
+    pointer-events: none;
+}
+
+.zonal-outline {
+    fill: none;
+    stroke: #ffffff;
+    stroke-width: 1.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+}
+
+/* In PM2.5 mode, hide the zonal climate outlines (they're temp-specific) */
+body.mode-pm25 .zonal-outline {
+    display: none;
+}
+
+.cluster-cell {
+    stroke: none;
 }
 
 /* Loading Overlay */
@@ -292,14 +451,13 @@ body {
     animation: spin 0.8s linear infinite;
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+body.mode-pm25 .spinner {
+    border-top-color: #c0392b;
+}
 
-    100% {
-        transform: rotate(360deg);
-    }
+@keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 .loading-text {
@@ -333,6 +491,13 @@ body {
     letter-spacing: -0.2px;
 }
 
+.legends-subhead {
+    font-size: 12px;
+    color: #6a737d;
+    margin-top: 4px;
+    font-weight: 400;
+}
+
 .legend-box {
     padding: 20px 24px;
     border-bottom: 1px solid #e1e4e8;
@@ -344,16 +509,9 @@ body {
 
 .legend-box h4 {
     font-size: 14px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
     font-weight: 600;
     color: #24292e;
-}
-
-.zone-description {
-    font-size: 11px;
-    color: #6a737d;
-    margin-bottom: 12px;
-    font-family: 'Courier New', monospace;
 }
 
 .legend-gradient {
@@ -363,34 +521,33 @@ body {
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+/* Temperature gradients */
 .tropical-gradient {
     background: linear-gradient(to right,
-            #ffffcc 0%,
-            #fee08b 20%,
-            #fdae61 40%,
-            #f46d43 60%,
-            #d73027 80%,
-            #a50026 100%);
+            #ffffcc 0%, #fee08b 20%, #fdae61 40%,
+            #f46d43 60%, #d73027 80%, #a50026 100%);
 }
 
 .temperate-gradient {
     background: linear-gradient(to right,
-            #d4edda 0%,
-            #74c476 20%,
-            #31a354 40%,
-            #006d2c 60%,
-            #00441b 80%,
-            #002d0f 100%);
+            #d4edda 0%, #74c476 20%, #31a354 40%,
+            #006d2c 60%, #00441b 80%, #002d0f 100%);
 }
 
 .cold-gradient {
     background: linear-gradient(to right,
-            #f7fbff 0%,
-            #c6dbef 20%,
-            #6baed6 40%,
-            #2171b5 60%,
-            #08519c 80%,
-            #08306b 100%);
+            #c9d7e6 0%, #c6dbef 20%, #6baed6 40%,
+            #2171b5 60%, #08519c 80%, #08306b 100%);
+}
+
+/* PM2.5 gradient — green → yellow → orange → red → maroon */
+.pm25-gradient {
+    background: linear-gradient(to right,
+            #00e400 0%,
+            #cccc00 25%,
+            #ff7e00 48%,
+            #ff0000 70%,
+            #7e0023 100%);
 }
 
 .legend-labels {
@@ -399,6 +556,74 @@ body {
     font-size: 11px;
     color: #6a737d;
     font-weight: 500;
+}
+
+/* PM2.5 scale labels: 5 items, spread evenly */
+.pm25-scale-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: #6a737d;
+    font-weight: 500;
+}
+
+/* AQI category rows */
+.aqi-categories {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.aqi-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.aqi-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.aqi-label {
+    font-size: 12.5px;
+    color: #24292e;
+    flex: 1;
+    font-weight: 500;
+}
+
+.aqi-range {
+    font-size: 11.5px;
+    color: #6a737d;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+/* WHO note */
+.who-note {
+    background: #f0f7ff;
+    border: 1px solid #c8def7;
+    border-left: 3px solid #2188ff;
+    border-radius: 5px;
+    padding: 10px 12px;
+}
+
+.who-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #2188ff;
+    margin-bottom: 5px;
+}
+
+.who-value {
+    font-size: 12px;
+    color: #444;
+    line-height: 1.6;
 }
 
 .legend-item-row {
@@ -416,13 +641,55 @@ body {
 }
 
 .legend-color-box.no-data {
-    background-color: #e2e8f0;
+    background-color: #474747;
 }
 
 .legend-text {
     font-size: 13px;
     color: #586069;
 }
+
+/* Loading note */
+.Data-loading-note {
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.loading-note {
+    background-color: #fff9db;
+    border: 1px solid #ffec99;
+    border-left: 4px solid #fcc419;
+    padding: 12px 16px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.loading-note p {
+    color: #856404;
+    font-size: 12.5px;
+    font-weight: 500;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Play button */
+#play-btn {
+    width: 100%;
+    padding: 10px 18px;
+    background: #000000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-family: inherit;
+}
+
+#play-btn:hover    { background: #1b203e; }
+#play-btn:disabled { background: #959da5; cursor: not-allowed; }
 
 /* ===== BOTTOM: SLIDER ===== */
 #slider-section {
@@ -445,36 +712,12 @@ body {
     letter-spacing: -0.2px;
 }
 
-
 #slider-controls {
     display: flex;
     align-items: center;
     gap: 16px;
     max-width: 1400px;
     margin: 0 auto;
-}
-
-#play-btn {
-    flex-shrink: 0;
-    width: 100%;
-    padding: 10px 18px;
-    background: #000000;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-#play-btn:hover {
-    background: #1b203e;
-}
-
-#play-btn:disabled {
-    background: #959da5;
-    cursor: not-allowed;
 }
 
 #date-slider {
@@ -501,9 +744,12 @@ body {
     transition: all 0.2s ease;
 }
 
+body.mode-pm25 #date-slider::-webkit-slider-thumb {
+    background: #c0392b;
+    box-shadow: 0 2px 4px rgba(192, 57, 43, 0.4);
+}
+
 #date-slider::-webkit-slider-thumb:hover {
-    background: #5568d3;
-    box-shadow: 0 3px 6px rgba(102, 126, 234, 0.5);
     transform: scale(1.1);
 }
 
@@ -515,13 +761,11 @@ body {
     border-radius: 50%;
     border: none;
     box-shadow: 0 2px 4px rgba(102, 126, 234, 0.4);
-    transition: all 0.2s ease;
 }
 
-#date-slider::-moz-range-thumb:hover {
-    background: #5568d3;
-    box-shadow: 0 3px 6px rgba(102, 126, 234, 0.5);
-    transform: scale(1.1);
+body.mode-pm25 #date-slider::-moz-range-thumb {
+    background: #c0392b;
+    box-shadow: 0 2px 4px rgba(192, 57, 43, 0.4);
 }
 
 #date-slider:disabled {
@@ -543,22 +787,13 @@ body {
 
 /* ===== SCROLLBAR STYLING ===== */
 #controls::-webkit-scrollbar,
-#legends::-webkit-scrollbar {
-    width: 8px;
-}
+#legends::-webkit-scrollbar  { width: 8px; }
 
 #controls::-webkit-scrollbar-track,
-#legends::-webkit-scrollbar-track {
-    background: #f6f8fa;
-}
+#legends::-webkit-scrollbar-track  { background: #f6f8fa; }
 
 #controls::-webkit-scrollbar-thumb,
-#legends::-webkit-scrollbar-thumb {
-    background: #d1d5da;
-    border-radius: 4px;
-}
+#legends::-webkit-scrollbar-thumb  { background: #d1d5da; border-radius: 4px; }
 
 #controls::-webkit-scrollbar-thumb:hover,
-#legends::-webkit-scrollbar-thumb:hover {
-    background: #959da5;
-}
+#legends::-webkit-scrollbar-thumb:hover  { background: #959da5; }
