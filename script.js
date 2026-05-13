@@ -545,11 +545,17 @@ function setInteractivityEnabled(enabled) {
 // MODE SWITCH
 // ============================================
 
-function switchMode(mode) {
+function switchMode(mode, { updateHash = true } = {}) {
     if (mode === state.currentMode) return;
 
     stopPlayback();
     state.currentMode = mode;
+
+    // ── URL hash routing: keep the address bar in sync so tabs are bookmarkable/shareable.
+    // Pass updateHash:false from the hashchange listener to avoid a history loop.
+    if (updateHash) {
+        history.replaceState(null, '', `#${mode}`);
+    }
 
     // Clear any in-flight loads for the old mode so stale completions from the
     // previous mode can't accidentally unlock the UI in the new one.
@@ -797,6 +803,22 @@ async function init() {
     // ── Mode switcher (top nav) ──
     document.querySelectorAll('.mode-btn').forEach(btn => {
         btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+    });
+
+    // ── URL hash routing ──────────────────────────────────────────────────────
+    // Read the hash on first load so a shared link like /index.html#pm25 opens
+    // directly on the correct tab without the user having to click anything.
+    const initialMode = window.location.hash === '#pm25' ? 'pm25' : 'temp';
+    if (initialMode !== state.currentMode) {
+        // switchMode guards against same-mode calls, but state.currentMode starts
+        // as 'temp' so we only fire this when the hash says 'pm25'.
+        switchMode(initialMode, { updateHash: false });
+    }
+
+    // Keep tabs in sync with browser back / forward navigation.
+    window.addEventListener('hashchange', () => {
+        const mode = window.location.hash === '#pm25' ? 'pm25' : 'temp';
+        switchMode(mode, { updateHash: false });
     });
 
     window.addEventListener('resize', onResize);
