@@ -21,6 +21,10 @@ const state = {
     svgWidth: 0,
     svgHeight: 0,
     boundaryGeoJSON: null,
+    // RACE-CONDITION FIX: Track in-flight loads per mode so the UI stays locked
+    // until every selected year has arrived — regardless of which resolves first.
+    pendingYearLoads:  new Set(),   // years currently being fetched (temp mode)
+    pendingPM25Loads:  new Set(),   // years currently being fetched (pm25 mode)
 };
 
 const HF_BASE = 'https://huggingface.co/datasets/Lotus-28/India_Temperature_Analysis_Data/resolve/main';
@@ -362,12 +366,20 @@ async function loadPM25YearDataHF(year) {
 // ============================================
 
 function rebuildDateIndex() {
+    // Remember which date was on screen before rebuilding so we can restore the
+    // slider position rather than always snapping back to index 0.  This matters
+    // when a fast-resolving year arrives before a slow one: without this, every
+    // intermediate rebuild would reset playback to the very first date.
+    const prevDate = state.allDates.length > 0
+        ? state.allDates[state.currentDateIndex]
+        : null;
+
     state.allDates      = [];
     state.dateToDataMap = {};
 
     if (state.currentMode === 'temp') {
         Array.from(document.querySelectorAll('.year-checkbox:checked'))
-            .map(cb => parseInt(cb.value)).sort()
+            .map(cb => parseInt(cb.value)).sort((a, b) => a - b)
             .forEach(year => {
                 const yd = state.loadedYearData[year];
                 if (!yd) return;
@@ -379,7 +391,7 @@ function rebuildDateIndex() {
     } else {
         // PM2.5 mode
         Array.from(document.querySelectorAll('.pm25-year-checkbox:checked'))
-            .map(cb => parseInt(cb.value)).sort()
+            .map(cb => parseInt(cb.value)).sort((a, b) => a - b)
             .forEach(year => {
                 const yd = state.loadedPM25YearData[year];
                 if (!yd) return;
@@ -390,8 +402,15 @@ function rebuildDateIndex() {
             });
     }
 
-    // Always reset slider position when rebuilding
-    state.currentDateIndex = 0;
+    // Restore the slider position to the same calendar date if it still exists in
+    // the newly-built index (e.g. user added a later year while viewing mid-2015).
+    // Fall back to 0 only when the previous date is no longer in the index.
+    if (prevDate !== null && state.dateToDataMap[prevDate] !== undefined) {
+        state.currentDateIndex = state.allDates.indexOf(prevDate);
+    } else {
+        state.currentDateIndex = 0;
+    }
+
     updateSlider();
 }
 
@@ -406,7 +425,11 @@ function updateSlider() {
         return;
     }
 
-    slider.disabled = playBtn.disabled = false;
+    // Guard: don't unlock controls if any fetches are still in-flight.
+    // This prevents an uncheck (synchronous) from accidentally re-enabling the
+    // slider while concurrent checked-year loads are still awaiting.
+    const hasInflight = state.pendingYearLoads.size > 0 || state.pendingPM25Loads.size > 0;
+    slider.disabled = playBtn.disabled = hasInflight;
     slider.max   = state.allDates.length - 1;
     slider.value = state.currentDateIndex;
     updateDateDisplay();
@@ -503,6 +526,21 @@ function clearMapColors() {
     }
 }
 
+// ─── Enable / disable slider + play button ───────────────────────────────────
+// Called by the checkbox handlers to lock the UI while datasets are in-flight.
+// We never enable the controls when there are no dates to display.
+function setInteractivityEnabled(enabled) {
+    const slider  = document.getElementById('date-slider');
+    const playBtn = document.getElementById('play-btn');
+    if (!enabled || !state.allDates.length) {
+        slider.disabled  = true;
+        playBtn.disabled = true;
+    } else {
+        slider.disabled  = false;
+        playBtn.disabled = false;
+    }
+}
+
 // ============================================
 // MODE SWITCH
 // ============================================
@@ -512,6 +550,11 @@ function switchMode(mode) {
 
     stopPlayback();
     state.currentMode = mode;
+
+    // Clear any in-flight loads for the old mode so stale completions from the
+    // previous mode can't accidentally unlock the UI in the new one.
+    state.pendingYearLoads.clear();
+    state.pendingPM25Loads.clear();
 
     // Reset shared date state so the two modes never bleed into each other
     state.allDates = [];
@@ -561,37 +604,63 @@ function updateMapHeader() {
 // ============================================
 
 async function handleYearCheckboxChange(e) {
-    // BUG FIX: stop playback before any async work. Without this, the RAF loop
-    // keeps incrementing currentDateIndex while we await, and then rebuildDateIndex
-    // resets it to 0 — producing the "jump to start" mid-playback symptom.
     stopPlayback();
 
     const year = parseInt(e.target.value);
+
     if (e.target.checked) {
+        // Register this year as in-flight BEFORE the await so any subsequent
+        // checkbox changes that fire synchronously see the correct pending count.
+        state.pendingYearLoads.add(year);
+        setInteractivityEnabled(false);
         showLoading();
+
         await loadYearData(year);
-        hideLoading();
+
+        state.pendingYearLoads.delete(year);
+
+        // Only unlock the UI and rebuild the date index once every selected year
+        // has finished loading.  If other years are still in-flight we just wait —
+        // their own handler will do the final rebuild when the last one resolves.
+        if (state.pendingYearLoads.size === 0) {
+            hideLoading();
+            rebuildDateIndex();
+            updateMapColors();
+            setInteractivityEnabled(true);
+        }
     } else {
+        // Unchecking is always synchronous; pending set should be empty here.
         delete state.loadedYearData[year];
+        rebuildDateIndex();
+        updateMapColors();
     }
-    rebuildDateIndex();
-    updateMapColors();
 }
 
 async function handlePM25YearCheckboxChange(e) {
-    // Same fix as above for PM2.5 mode
     stopPlayback();
 
     const year = parseInt(e.target.value);
+
     if (e.target.checked) {
+        state.pendingPM25Loads.add(year);
+        setInteractivityEnabled(false);
         showLoading();
+
         await loadPM25YearDataHF(year);
-        hideLoading();
+
+        state.pendingPM25Loads.delete(year);
+
+        if (state.pendingPM25Loads.size === 0) {
+            hideLoading();
+            rebuildDateIndex();
+            updateMapColors();
+            setInteractivityEnabled(true);
+        }
     } else {
         delete state.loadedPM25YearData[year];
+        rebuildDateIndex();
+        updateMapColors();
     }
-    rebuildDateIndex();
-    updateMapColors();
 }
 
 function handleSliderChange(e) {
