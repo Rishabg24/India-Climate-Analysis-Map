@@ -255,7 +255,7 @@ function redrawClusters() {
         state.cellNodes.push(node);
     });
 
-    buildZonalOutlines(voronoi, delaunay, oGroup);
+    // buildZonalOutlines(voronoi, delaunay, oGroup);
 }
 
 function buildZonalOutlines(voronoi, delaunay, oGroup) {
