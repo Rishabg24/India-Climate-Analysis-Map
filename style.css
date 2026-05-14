@@ -22,18 +22,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* ═══════════════════════════════════════════════════════
-   MODE VISIBILITY RULES
-   body defaults to temp mode (no class needed)
-   body.mode-pm25 triggers the PM2.5 view
-════════════════════════════════════════════════════════ */
-.pm25-only                    { display: none; }
-body.mode-pm25 .pm25-only     { display: block; }
-body.mode-pm25 .temp-only     { display: none; }
-
-/* Fix: flex/grid children that use pm25-only need display:flex/grid not block */
-body.mode-pm25 .legends-header.pm25-only { display: block; }
-
 /* ===== LAYOUT ===== */
 #app {
     display: flex;
@@ -71,11 +59,6 @@ body.mode-pm25 .legends-header.pm25-only { display: block; }
     gap: 8px;
 }
 
-.nav-flag {
-    font-size: 18px;
-    line-height: 1;
-}
-
 .nav-title {
     font-size: 14px;
     font-weight: 700;
@@ -83,56 +66,6 @@ body.mode-pm25 .legends-header.pm25-only { display: block; }
     letter-spacing: -0.2px;
     white-space: nowrap;
 }
-
-/* ─── Mode Toggle Pill ─── */
-.mode-toggle-wrapper {
-    display: flex;
-    justify-content: center;
-}
-
-.mode-toggle {
-    display: flex;
-    background: #f0f1f3;
-    border-radius: 10px;
-    padding: 4px;
-    gap: 3px;
-}
-
-.mode-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 18px;
-    border: none;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    background: transparent;
-    color: #6a737d;
-    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
-    font-family: inherit;
-    white-space: nowrap;
-    line-height: 1;
-}
-
-.mode-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.6);
-    color: #24292e;
-}
-
-.mode-btn.active {
-    background: #ffffff;
-    color: #24292e;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0,0,0,0.04);
-}
-
-/* Accent the active button per mode */
-body:not(.mode-pm25) #btn-temp.active { color: #667eea; }
-body.mode-pm25       #btn-pm25.active { color: #c0392b; }
-
-.mode-icon { font-size: 15px; }
-.mode-label { letter-spacing: -0.1px; }
 
 /* ─── Nav right end: dataset tag ─── */
 .nav-end {
@@ -160,17 +93,12 @@ body.mode-pm25       #btn-pm25.active { color: #c0392b; }
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
 }
 
-/* ─── Controls header: changes gradient in PM2.5 mode ─── */
+/* ─── Controls header ─── */
 .controls-header {
     padding: 28px 24px 24px;
     background: linear-gradient(135deg, #486b7e 0%, #c12323 100%);
     color: white;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background 0.3s ease;
-}
-
-body.mode-pm25 .controls-header {
-    background: linear-gradient(135deg,  #486b7e 0%, #c12323 100%);
 }
 
 .controls-header h2 {
@@ -282,10 +210,6 @@ body.mode-pm25 .controls-header {
     color: #667eea;
 }
 
-body.mode-pm25 .checkbox-label input[type="checkbox"]:checked~.checkbox-text {
-    color: #c0392b;
-}
-
 .checkbox-label input[type="checkbox"]:checked+.checkbox-text::before {
     content: '✓';
     position: absolute;
@@ -293,10 +217,6 @@ body.mode-pm25 .checkbox-label input[type="checkbox"]:checked~.checkbox-text {
     right: 6px;
     font-size: 12px;
     color: #667eea;
-}
-
-body.mode-pm25 .checkbox-label input[type="checkbox"]:checked+.checkbox-text::before {
-    color: #c0392b;
 }
 
 .checkbox-text {
@@ -320,37 +240,10 @@ body.mode-pm25 .checkbox-label input[type="checkbox"]:checked+.checkbox-text::be
     border-left: 3px solid #2f3658;
 }
 
-body.mode-pm25 .instructions {
-    border-left-color: #2f3658;
-}
-
 .instructions p {
     font-size: 13px;
     line-height: 1.6;
     color: #586069;
-}
-
-/* PM2.5 source note */
-.pm25-source-note {
-    padding: 12px 14px;
-    background: #fff8f5;
-    border-radius: 6px;
-    border: 1px solid #fad7c8;
-}
-
-.source-label {
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-    color: #c0392b;
-    margin-bottom: 4px;
-}
-
-.source-value {
-    font-size: 13px;
-    color: #444;
-    line-height: 1.5;
 }
 
 /* ===== CENTER: MAP ===== */
@@ -414,11 +307,6 @@ body.mode-pm25 .instructions {
     pointer-events: none;
 }
 
-/* In PM2.5 mode, hide the zonal climate outlines (they're temp-specific) */
-body.mode-pm25 .zonal-outline {
-    display: none;
-}
-
 .cluster-cell {
     stroke: none;
 }
@@ -449,10 +337,6 @@ body.mode-pm25 .zonal-outline {
     border-top: 4px solid #667eea;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-}
-
-body.mode-pm25 .spinner {
-    border-top-color: #c0392b;
 }
 
 @keyframes spin {
@@ -489,13 +373,6 @@ body.mode-pm25 .spinner {
     font-weight: 700;
     color: #24292e;
     letter-spacing: -0.2px;
-}
-
-.legends-subhead {
-    font-size: 12px;
-    color: #6a737d;
-    margin-top: 4px;
-    font-weight: 400;
 }
 
 .legend-box {
@@ -540,90 +417,12 @@ body.mode-pm25 .spinner {
             #2171b5 60%, #08519c 80%, #08306b 100%);
 }
 
-/* PM2.5 gradient — green → yellow → orange → red → maroon */
-.pm25-gradient {
-    background: linear-gradient(to right,
-            #00e400 0%,
-            #cccc00 25%,
-            #ff7e00 48%,
-            #ff0000 70%,
-            #7e0023 100%);
-}
-
 .legend-labels {
     display: flex;
     justify-content: space-between;
     font-size: 11px;
     color: #6a737d;
     font-weight: 500;
-}
-
-/* PM2.5 scale labels: 5 items, spread evenly */
-.pm25-scale-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10.5px;
-    color: #6a737d;
-    font-weight: 500;
-}
-
-/* AQI category rows */
-.aqi-categories {
-    display: flex;
-    flex-direction: column;
-    gap: 9px;
-}
-
-.aqi-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.aqi-dot {
-    width: 13px;
-    height: 13px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.aqi-label {
-    font-size: 12.5px;
-    color: #24292e;
-    flex: 1;
-    font-weight: 500;
-}
-
-.aqi-range {
-    font-size: 11.5px;
-    color: #6a737d;
-    font-weight: 400;
-    white-space: nowrap;
-}
-
-/* WHO note */
-.who-note {
-    background: #f0f7ff;
-    border: 1px solid #c8def7;
-    border-left: 3px solid #2188ff;
-    border-radius: 5px;
-    padding: 10px 12px;
-}
-
-.who-label {
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: #2188ff;
-    margin-bottom: 5px;
-}
-
-.who-value {
-    font-size: 12px;
-    color: #444;
-    line-height: 1.6;
 }
 
 .legend-item-row {
@@ -744,11 +543,6 @@ body.mode-pm25 .spinner {
     transition: all 0.2s ease;
 }
 
-body.mode-pm25 #date-slider::-webkit-slider-thumb {
-    background: #c0392b;
-    box-shadow: 0 2px 4px rgba(192, 57, 43, 0.4);
-}
-
 #date-slider::-webkit-slider-thumb:hover {
     transform: scale(1.1);
 }
@@ -761,11 +555,6 @@ body.mode-pm25 #date-slider::-webkit-slider-thumb {
     border-radius: 50%;
     border: none;
     box-shadow: 0 2px 4px rgba(102, 126, 234, 0.4);
-}
-
-body.mode-pm25 #date-slider::-moz-range-thumb {
-    background: #c0392b;
-    box-shadow: 0 2px 4px rgba(192, 57, 43, 0.4);
 }
 
 #date-slider:disabled {

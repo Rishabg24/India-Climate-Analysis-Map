@@ -12,19 +12,16 @@ const state = {
     clusterMeta: [],         // clusterMeta[i] = { clusterId, zone } — pre-cached at load time
     clustersData: null,
     loadedYearData: {},      // temperature year data
-    loadedPM25YearData: {},  // PM2.5 year data
     allDates: [],
     dateToDataMap: {},
     currentTempType: 'tmax',
-    currentMode: 'temp',     // 'temp' | 'pm25'
     currentDateIndex: 0,
     svgWidth: 0,
     svgHeight: 0,
     boundaryGeoJSON: null,
-    // RACE-CONDITION FIX: Track in-flight loads per mode so the UI stays locked
+    // RACE-CONDITION FIX: Track in-flight loads so the UI stays locked
     // until every selected year has arrived — regardless of which resolves first.
-    pendingYearLoads:  new Set(),   // years currently being fetched (temp mode)
-    pendingPM25Loads:  new Set(),   // years currently being fetched (pm25 mode)
+    pendingYearLoads: new Set(),   // years currently being fetched
 };
 
 const HF_BASE = 'https://huggingface.co/datasets/Lotus-28/India_Temperature_Analysis_Data/resolve/main';
@@ -70,26 +67,6 @@ const ZONE_CONFIG = [
 // Pre-compute reciprocals to avoid division in the hot path
 ZONE_CONFIG.forEach(z => { z.rangeRecip = 1 / (z.maxTemp - z.minTemp); });
 
-// ============================================
-// PM2.5 COLOR SCALE
-// Mirrors the CSS gradient in .pm25-gradient:
-//   green(Good) → yellow(Moderate) → orange(Sensitive) → red(Unhealthy) → maroon(Hazardous)
-// WHO 24-hr guideline: 15 µg/m³; India's typical range: 0–250+
-// We cap at 150 (Hazardous) so extreme outliers don't wash out the scale.
-// ============================================
-
-const PM25_DOMAIN_MAX = 150;  // µg/m³ — anything ≥ this renders as full maroon
-
-const PM25_COLOR_SCALE = d3.scaleSequential(
-    d3.interpolateRgbBasis([
-        '#00e400',  //   0  Good
-        '#cccc00',  //  ~35 Moderate
-        '#ff7e00',  //  ~75 Sensitive Groups
-        '#ff0000',  // ~110 Unhealthy
-        '#7e0023',  //  150 Hazardous
-    ])
-).domain([0, PM25_DOMAIN_MAX]);
-
 const NO_DATA_COLOR = '#474747';
 
 // Temperature color (zone-aware)
@@ -98,13 +75,6 @@ function getColorTemp(zoneIndex, temperature) {
     const cfg = ZONE_CONFIG[zoneIndex];
     const t = Math.max(0, Math.min(1, (temperature - cfg.minTemp) * cfg.rangeRecip));
     return cfg.colorScale(t);
-}
-
-// PM2.5 color (single global scale)
-function getColorPM25(value) {
-    if (value === null || value === undefined) return NO_DATA_COLOR;
-    const capped = Math.max(0, Math.min(PM25_DOMAIN_MAX, value));
-    return PM25_COLOR_SCALE(capped);
 }
 
 function showLoading() { document.getElementById('loading-overlay').classList.add('active'); }
@@ -341,28 +311,8 @@ async function loadYearData(year) {
     }
 }
 
-// ─── PM2.5 year loader (HuggingFace) ───
-async function loadPM25YearDataHF(year) {
-    // BUG FIX: was reading from loadedYearData (temperature cache) on both the
-    // cache-hit check and the store — PM2.5 data was written into the wrong object
-    // so updateMapColorsPM25 always read undefined and the map stayed grey.
-    if (state.loadedPM25YearData[year]) return state.loadedPM25YearData[year];
-
-    console.log(`Loading PM2.5 year ${year} from HuggingFace...`);
-    try {
-        const data = await hfFetch(`pm25_data_${year}.json`);
-        state.loadedPM25YearData[year] = data;  // ← correct cache
-        console.log(`Loaded PM2.5 ${year}: ${data.dates.length} days`);
-        return data;
-    } catch (err) {
-        console.error(err);
-        alert(`Failed to load PM2.5 data for ${year}.\n${err.message}`);
-        return null;
-    }
-}
-
 // ============================================
-// DATE MANAGEMENT — mode-aware
+// DATE MANAGEMENT
 // ============================================
 
 function rebuildDateIndex() {
@@ -377,30 +327,16 @@ function rebuildDateIndex() {
     state.allDates      = [];
     state.dateToDataMap = {};
 
-    if (state.currentMode === 'temp') {
-        Array.from(document.querySelectorAll('.year-checkbox:checked'))
-            .map(cb => parseInt(cb.value)).sort((a, b) => a - b)
-            .forEach(year => {
-                const yd = state.loadedYearData[year];
-                if (!yd) return;
-                yd.dates.forEach((d, idx) => {
-                    state.allDates.push(d);
-                    state.dateToDataMap[d] = { year, localIndex: idx };
-                });
+    Array.from(document.querySelectorAll('.year-checkbox:checked'))
+        .map(cb => parseInt(cb.value)).sort((a, b) => a - b)
+        .forEach(year => {
+            const yd = state.loadedYearData[year];
+            if (!yd) return;
+            yd.dates.forEach((d, idx) => {
+                state.allDates.push(d);
+                state.dateToDataMap[d] = { year, localIndex: idx };
             });
-    } else {
-        // PM2.5 mode
-        Array.from(document.querySelectorAll('.pm25-year-checkbox:checked'))
-            .map(cb => parseInt(cb.value)).sort((a, b) => a - b)
-            .forEach(year => {
-                const yd = state.loadedPM25YearData[year];
-                if (!yd) return;
-                yd.dates.forEach((d, idx) => {
-                    state.allDates.push(d);
-                    state.dateToDataMap[d] = { year, localIndex: idx };
-                });
-            });
-    }
+        });
 
     // Restore the slider position to the same calendar date if it still exists in
     // the newly-built index (e.g. user added a later year while viewing mid-2015).
@@ -428,7 +364,7 @@ function updateSlider() {
     // Guard: don't unlock controls if any fetches are still in-flight.
     // This prevents an uncheck (synchronous) from accidentally re-enabling the
     // slider while concurrent checked-year loads are still awaiting.
-    const hasInflight = state.pendingYearLoads.size > 0 || state.pendingPM25Loads.size > 0;
+    const hasInflight = state.pendingYearLoads.size > 0;
     slider.disabled = playBtn.disabled = hasInflight;
     slider.max   = state.allDates.length - 1;
     slider.value = state.currentDateIndex;
@@ -453,16 +389,12 @@ function updateDateDisplay() {
 }
 
 // ============================================
-// MAP COLOR UPDATE — dispatcher + per-mode implementations
+// MAP COLOR UPDATE
 // Hot path: optimized for speed across ~30k Voronoi cells
 // ============================================
 
 function updateMapColors() {
-    if (state.currentMode === 'pm25') {
-        updateMapColorsPM25();
-    } else {
-        updateMapColorsTemp();
-    }
+    updateMapColorsTemp();
 }
 
 // ─── Temperature ───
@@ -491,33 +423,7 @@ function updateMapColorsTemp() {
     }
 }
 
-// ─── PM2.5 ───
-function updateMapColorsPM25() {
-    if (!state.clustersData || !state.allDates.length) return;
-
-    const dataInfo = state.dateToDataMap[state.allDates[state.currentDateIndex]];
-    if (!dataInfo) return;
-
-    const yearData = state.loadedPM25YearData[dataInfo.year];
-    if (!yearData) return;
-
-    const pm25Data   = yearData.pm25;
-    const localIndex = dataInfo.localIndex;
-    const meta       = state.clusterMeta;
-    const nodes      = state.cellNodes;
-    const n          = meta.length;
-
-    // PERF: Same tight loop pattern — clusterId lookup, direct DOM write
-    for (let i = 0; i < n; i++) {
-        const node = nodes[i];
-        if (!node) continue;
-        const { clusterId } = meta[i];
-        const vals = pm25Data[clusterId];
-        node.setAttribute('fill', vals ? getColorPM25(vals[localIndex]) : NO_DATA_COLOR);
-    }
-}
-
-// ─── Reset all cells to no-data (used on mode switch) ───
+// ─── Reset all cells to no-data ───
 function clearMapColors() {
     const nodes = state.cellNodes;
     const n = nodes.length;
@@ -542,67 +448,15 @@ function setInteractivityEnabled(enabled) {
 }
 
 // ============================================
-// MODE SWITCH
+// MAP HEADER
 // ============================================
-
-function switchMode(mode, { updateHash = true } = {}) {
-    if (mode === state.currentMode) return;
-
-    stopPlayback();
-    state.currentMode = mode;
-
-    // ── URL hash routing: keep the address bar in sync so tabs are bookmarkable/shareable.
-    // Pass updateHash:false from the hashchange listener to avoid a history loop.
-    if (updateHash) {
-        history.replaceState(null, '', `#${mode}`);
-    }
-
-    // Clear any in-flight loads for the old mode so stale completions from the
-    // previous mode can't accidentally unlock the UI in the new one.
-    state.pendingYearLoads.clear();
-    state.pendingPM25Loads.clear();
-
-    // Reset shared date state so the two modes never bleed into each other
-    state.allDates = [];
-    state.dateToDataMap = {};
-    state.currentDateIndex = 0;
-
-    // ── body class drives ALL .temp-only / .pm25-only visibility ──
-    document.body.classList.toggle('mode-pm25', mode === 'pm25');
-
-    // ── nav pill: active state + aria ──
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        const isActive = btn.dataset.mode === mode;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-selected', isActive);
-    });
-
-    // ── map header ──
-    updateMapHeader();
-
-    // ── reset slider display ──
-    const slider  = document.getElementById('date-slider');
-    const playBtn = document.getElementById('play-btn');
-    slider.disabled = playBtn.disabled = true;
-    slider.max = slider.value = 0;
-    document.getElementById('current-date').textContent = 'Select years to begin';
-
-    // ── paint map grey until user loads data ──
-    clearMapColors();
-}
 
 function updateMapHeader() {
     const titleEl    = document.getElementById('current-map-title');
     const subtitleEl = document.getElementById('map-subtitle');
-
-    if (state.currentMode === 'pm25') {
-        titleEl.textContent    = 'PM2.5 Air Quality';
-        subtitleEl.textContent = 'Select years and use the slider to explore daily air quality patterns';
-    } else {
-        const label = state.currentTempType === 'tmax' ? 'Maximum' : 'Minimum';
-        titleEl.textContent    = `${label} Temperature`;
-        subtitleEl.textContent = 'Select years and use the slider to explore daily temperature patterns';
-    }
+    const label = state.currentTempType === 'tmax' ? 'Maximum' : 'Minimum';
+    titleEl.textContent    = `${label} Temperature`;
+    subtitleEl.textContent = 'Select years and use the slider to explore daily temperature patterns';
 }
 
 // ============================================
@@ -642,33 +496,6 @@ async function handleYearCheckboxChange(e) {
     }
 }
 
-async function handlePM25YearCheckboxChange(e) {
-    stopPlayback();
-
-    const year = parseInt(e.target.value);
-
-    if (e.target.checked) {
-        state.pendingPM25Loads.add(year);
-        setInteractivityEnabled(false);
-        showLoading();
-
-        await loadPM25YearDataHF(year);
-
-        state.pendingPM25Loads.delete(year);
-
-        if (state.pendingPM25Loads.size === 0) {
-            hideLoading();
-            rebuildDateIndex();
-            updateMapColors();
-            setInteractivityEnabled(true);
-        }
-    } else {
-        delete state.loadedPM25YearData[year];
-        rebuildDateIndex();
-        updateMapColors();
-    }
-}
-
 function handleSliderChange(e) {
     state.currentDateIndex = parseInt(e.target.value);
     updateDateDisplay();
@@ -677,9 +504,7 @@ function handleSliderChange(e) {
 
 function handleTempTypeChange(e) {
     state.currentTempType = e.target.value;
-    if (state.currentMode === 'temp') {
-        updateMapHeader();
-    }
+    updateMapHeader();
     updateMapColors();
 }
 
@@ -786,10 +611,6 @@ async function init() {
     document.querySelectorAll('input[name="temp-type"]')
         .forEach(r => r.addEventListener('change', handleTempTypeChange));
 
-    // ── PM2.5 controls ──
-    document.querySelectorAll('.pm25-year-checkbox')
-        .forEach(cb => cb.addEventListener('change', handlePM25YearCheckboxChange));
-
     // ── Shared slider / play / keyboard ──
     document.getElementById('date-slider').addEventListener('input', handleSliderChange);
     document.getElementById('date-slider').addEventListener('mousedown', stopPlayback);
@@ -798,27 +619,6 @@ async function init() {
     document.addEventListener('keydown', e => {
         if (e.key === 'ArrowRight') { e.preventDefault(); stepDate(+1); }
         if (e.key === 'ArrowLeft')  { e.preventDefault(); stepDate(-1); }
-    });
-
-    // ── Mode switcher (top nav) ──
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => switchMode(btn.dataset.mode));
-    });
-
-    // ── URL hash routing ──────────────────────────────────────────────────────
-    // Read the hash on first load so a shared link like /index.html#pm25 opens
-    // directly on the correct tab without the user having to click anything.
-    const initialMode = window.location.hash === '#pm25' ? 'pm25' : 'temp';
-    if (initialMode !== state.currentMode) {
-        // switchMode guards against same-mode calls, but state.currentMode starts
-        // as 'temp' so we only fire this when the hash says 'pm25'.
-        switchMode(initialMode, { updateHash: false });
-    }
-
-    // Keep tabs in sync with browser back / forward navigation.
-    window.addEventListener('hashchange', () => {
-        const mode = window.location.hash === '#pm25' ? 'pm25' : 'temp';
-        switchMode(mode, { updateHash: false });
     });
 
     window.addEventListener('resize', onResize);

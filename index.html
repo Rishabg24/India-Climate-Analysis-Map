@@ -9,7 +9,215 @@
     <!-- D3.js -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
 
+    <!-- Custom CSS --><!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>India Temperature Analysis</title>
+
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="app">
+
+        <!-- ═══════════════════════════════════════
+             TOP NAV
+        ════════════════════════════════════════ -->
+        <nav id="top-nav">
+            <div class="nav-brand">
+                <span class="nav-title">India Climate Analysis</span>
+            </div>
+
+            <div></div><!-- centre column kept for grid alignment -->
+
+            <div class="nav-end">
+                <span class="nav-dataset-tag">Daily Temperature · 2013–2021</span>
+            </div>
+        </nav>
+
+        <div id="main-content">
+
+            <!-- ═══════════════════════════════════════
+                 LEFT PANEL — controls
+            ════════════════════════════════════════ -->
+            <aside id="controls">
+                <div class="controls-header">
+                    <h2>Climate Data Explorer</h2>
+                    <p class="subtitle">India Temperature Analysis 2013–2021</p>
+                </div>
+
+                <!-- ─── TEMPERATURE CONTROLS ─── -->
+                <div class="control-section">
+                    <h3>Temperature Type</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="temp-type" value="tmax" checked>
+                            <span class="radio-text">Maximum Temperature</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="temp-type" value="tmin">
+                            <span class="radio-text">Minimum Temperature</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>Select Years</h3>
+                    <div class="checkbox-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2013">
+                            <span class="checkbox-text">2013</span>
+                            <span class="year-note">Dec</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2014">
+                            <span class="checkbox-text">2014</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2015">
+                            <span class="checkbox-text">2015</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2016">
+                            <span class="checkbox-text">2016</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2017">
+                            <span class="checkbox-text">2017</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2018">
+                            <span class="checkbox-text">2018</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2019">
+                            <span class="checkbox-text">2019</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2020">
+                            <span class="checkbox-text">2020</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" class="year-checkbox" value="2021">
+                            <span class="checkbox-text">2021</span>
+                            <span class="year-note">Jan–Apr</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <div class="instructions">
+                        <p>Select one or more years to load temperature data. Use the slider below and your
+                            left and right arrow keys to explore different dates, or press Play to animate.</p>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- ═══════════════════════════════════════
+                 CENTER — map
+            ════════════════════════════════════════ -->
+            <main id="map-container">
+                <div id="map-header">
+                    <h1 id="current-map-title">Maximum Temperature</h1>
+                    <p id="map-subtitle">Select years and use the slider to explore daily temperature patterns</p>
+                </div>
+                <div id="map">
+                    <!-- D3 SVG will be created here -->
+                </div>
+                <div id="loading-overlay">
+                    <div class="spinner"></div>
+                    <p class="loading-text">Loading data...</p>
+                </div>
+            </main>
+
+            <!-- ═══════════════════════════════════════
+                 RIGHT PANEL — legends
+            ════════════════════════════════════════ -->
+            <aside id="legends">
+
+                <div class="legends-header">
+                    <h3>Temperature Zones</h3>
+                </div>
+
+                <div class="legend-box">
+                    <h4>Tropical Zone</h4>
+                    <div class="legend-gradient tropical-gradient"></div>
+                    <div class="legend-labels">
+                        <span>15°C</span>
+                        <span>30°C</span>
+                    </div>
+                </div>
+
+                <div class="legend-box">
+                    <h4>Temperate Zone</h4>
+                    <div class="legend-gradient temperate-gradient"></div>
+                    <div class="legend-labels">
+                        <span>16°C</span>
+                        <span>28°C</span>
+                    </div>
+                </div>
+
+                <div class="legend-box">
+                    <h4>Cold Zone</h4>
+                    <div class="legend-gradient cold-gradient"></div>
+                    <div class="legend-labels">
+                        <span>8°C</span>
+                        <span>25°C</span>
+                    </div>
+                </div>
+
+                <!-- ─── ALWAYS VISIBLE ─── -->
+                <div class="legend-box">
+                    <h4>No Data</h4>
+                    <div class="legend-item-row">
+                        <span class="legend-color-box no-data"></span>
+                        <span class="legend-text">Missing data</span>
+                    </div>
+                </div>
+
+                <div class="legend-box">
+                    <button id="play-btn" disabled>▶ Play</button>
+                </div>
+
+                <div class="Data-loading-note">
+                    <div class="loading-note">
+                        <p>Note: Please allow up to 5 minutes for all the data to load.</p>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+
+        <!-- ═══════════════════════════════════════
+             BOTTOM — date slider
+        ════════════════════════════════════════ -->
+        <div id="slider-section">
+            <div id="date-display">
+                <span id="current-date">Select years to begin</span>
+            </div>
+            <div id="slider-controls">
+                <input type="range" id="date-slider" min="0" max="0" value="0" disabled>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+
+</body>
+
+</html>
     <link rel="stylesheet" href="style.css">
 </head>
 
